@@ -1,0 +1,131 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import scipy.stats as stats
+import seaborn as sns
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+
+
+def rodar_trilha_estatistica(df_subset, nome_da_base):
+    print("=" * 60)
+    print(f"📊 DIAGNÓSTICO ESTRUTURAL E ESTATÍSTICO: {nome_da_base.upper()}")
+    print("=" * 60)
+
+    # --- PASSO 0: LIMPEZA DE NULOS ---
+    colunas_criticas = [
+        "preco_venda",
+        "area_m2",
+        "localidade",
+        "quartos",
+        "banheiros",
+    ]
+    df_limpo = df_subset.dropna(subset=colunas_criticas).copy()
+    print(
+        f"Registros originais: {len(df_subset)} | Após remover nulos críticos: {len(df_limpo)}"
+    )
+
+    # --- 📌 TESTE 1: NORMALIDADE (Shapiro-Wilk) ---
+    print("\n📌 TESTE 1: Normalidade do Preço de Venda")
+    # Shapiro-Wilk aceita no máximo 5000 registros, limitamos a amostra por segurança
+    amostra_shapiro = df_limpo["preco_venda"].sample(
+        min(4000, len(df_limpo)), random_state=42
+    )
+    stat, p_valor_shapiro = stats.shapiro(amostra_shapiro)
+
+    print(f"   p-valor de Shapiro-Wilk: {p_valor_shapiro:.5f}")
+    if p_valor_shapiro < 0.05:
+        print(
+            "   ❌ Conclusão: Preços NÃO seguem uma curva normal (distribuição assimétrica)."
+        )
+        print("   👉 Sugestão: Algoritmos baseados em Árvores (Random Forest).")
+    else:
+        print("   ✅ Conclusão: Preços seguem uma Distribuição Normal.")
+        print("   👉 Sugestão: Modelos Lineares são estatisticamente permitidos.")
+
+    # --- 📌 TESTE 2: MULTICOLINEARIDADE (Matriz de Correlação) ---
+    print("\n📌 TESTE 2: Redundância entre Variáveis de Entrada")
+    colunas_numericas = [
+        "area_m2",
+        "quartos",
+        "banheiros",
+        "vagas_garagem",
+        "idade_anos",
+        "preco_venda",
+    ]
+    matriz_corr = df_limpo[colunas_numericas].corr(method="pearson")
+
+    preditores = ["area_m2", "quartos", "banheiros", "vagas_garagem", "idade_anos"]
+    alta_corr = False
+    for i in range(len(preditores)):
+        for j in range(i + 1, len(preditores)):
+            corr_val = matriz_corr.loc[preditores[i], preditores[j]]
+            if abs(corr_val) > 0.75:
+                print(
+                    f"   ⚠️ Alerta de Redundância: {preditores[i]} e {preditores[j]} correlacionados em {corr_val:.2f}"
+                )
+                alta_corr = True
+
+    if alta_corr:
+        print(
+            "   ❌ Conclusão: Há multicolinearidade forte. Evite Regressão Linear Clássica."
+        )
+    else:
+        print(
+            "   ✅ Conclusão: Variáveis numéricas de entrada são estatisticamente independentes."
+        )
+
+    # --- 📌 TESTE 3: ASSOCIAÇÃO CATEGÓRICA (ANOVA para Localidade) ---
+    print("\n📌 TESTE 3: Impacto do Bairro/Localidade no Preço")
+    formula_anova = "preco_venda ~ C(localidade)"
+    modelo_anova = smf.ols(formula_anova, data=df_limpo).fit()
+    tabela_anova = sm.stats.anova_lm(modelo_anova, typ=2)
+    p_valor_anova = tabela_anova["PR(>F)"].iloc[0]
+
+    print(f"   p-valor do teste ANOVA: {p_valor_anova:.5f}")
+    if p_valor_anova < 0.05:
+        print(
+            "   ✅ Conclusão: A localidade tem impacto real e comprovado no preço."
+        )
+        print(
+            "   👉 Ação de ML: Use One-Hot Encoding ou algoritmos que suportem categorias nativamente."
+        )
+    else:
+        print("   ❌ Conclusão: A localidade não influencia o preço nesta base.")
+
+    # --- 📌 TESTE 4: VISUALIZAÇÃO GRÁFICA ---
+    plt.figure(figsize=(12, 4))
+    plt.suptitle(f"Análise Visual - {nome_da_base.upper()}", fontsize=14)
+
+    # Gráfico de Dispersão (Linearidade)
+    plt.subplot(1, 2, 1)
+    sns.scatterplot(data=df_limpo, x="area_m2", y="preco_venda", alpha=0.4)
+    sns.regplot(
+        data=df_limpo,
+        x="area_m2",
+        y="preco_venda",
+        scatter=False,
+        color="red",
+        line_kws={"label": "Tendência Linear"},
+    )
+    plt.title("Área vs Preço")
+    plt.xlabel("M²")
+    plt.ylabel("Preço")
+    plt.legend()
+
+    # Histograma (Forma do Alvo)
+    plt.subplot(1, 2, 2)
+    sns.histplot(df_limpo["preco_venda"], kde=True, color="teal")
+    plt.title("Distribuição do Preço de Venda")
+    plt.xlabel("Preço")
+
+    plt.tight_layout()
+    plt.show()
+    print("\n" + "=" * 60 + "\n")
+
+
+# --- EXECUTANDO A TRILHA PARA CADA BASE DE FORMA ISOLADA ---
+# O script assume que df_casas e df_apartamentos já estão na sua memória.
+
+rodar_trilha_estatistica(df_casas, "Casas")
+rodar_trilha_estatistica(df_apartamentos, "Apartamentos")
