@@ -1,0 +1,12 @@
+Para criar um ambiente virtual no seu terminal do Powershell:
+No VSCODE pressione CTRL+JSON
+ crie o ambiente digitando na linha de comando : .\.venv\Scripts\Activate.ps1
+
+ Após isso é necessario ativar o ambiente recem criado:
+.\venv\Scripts\Activate.ps1
+
+
+ Erro comum: "cannot be loaded because running scripts is disabled on this system"
+ Solução:
+ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+.\.venv\Scripts\Activate.ps1
