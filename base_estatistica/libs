@@ -1,1 +1,1 @@
-pip install pandas faker numpy matplotlib scikitlearn
+pip install pandas faker numpy matplotlib scikit-learn

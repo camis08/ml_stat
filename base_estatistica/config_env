@@ -1,12 +1,19 @@
 Para criar um ambiente virtual no seu terminal do Powershell:
 No VSCODE pressione CTRL+JSON
- crie o ambiente digitando na linha de comando : .\.venv\Scripts\Activate.ps1
+ crie o ambiente digitando na linha de comando python -m venv venv
+
+ Erro comum -- \.venv\Scripts\Activate.ps1 : O termo '.\.venv\Scripts\Activate.ps1' não é reconhecido como nome de cmdlet, função, arquivo de script ou programa operável. Verifique a grafia do nome ou, se um 
+caminho tiver sido incluído, veja se o caminho está correto e tente novamente.
+No linha:1 caractere:1
++ .\.venv\Scripts\Activate.ps1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (.\.venv\Scripts\Activate.ps1:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+    Solução - Alterar as permissoes de execucao de script do Windows com o comando
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
 
  Após isso é necessario ativar o ambiente recem criado:
 .\venv\Scripts\Activate.ps1
 
-
- Erro comum: "cannot be loaded because running scripts is disabled on this system"
- Solução:
- Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
-.\.venv\Scripts\Activate.ps1
